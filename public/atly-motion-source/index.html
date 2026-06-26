@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body {
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: #111820;
+      }
+      #root, .scene { width: 100%; height: 100%; overflow: hidden; }
+      .scene { position: relative; background: #111820; isolation: isolate; }
+      .camera,
+      .needle-camera,
+      .fabric-camera {
+        position: absolute;
+        inset: -26px;
+        will-change: transform;
+      }
+      .camera,
+      .needle-motion,
+      .fabric-feed {
+        background-image: url("atly-sewing-source.png");
+        background-position: center;
+        background-repeat: no-repeat;
+        background-size: cover;
+      }
+      .camera {
+        transform: scale(1.012);
+        filter: saturate(0.82) contrast(1.06) brightness(0.98);
+      }
+      .needle-camera {
+        z-index: 3;
+        transform: scale(1.012);
+      }
+      .fabric-camera {
+        z-index: 2;
+        transform: scale(1.012);
+        pointer-events: none;
+      }
+      .fabric-feed {
+        position: absolute;
+        inset: 0;
+        mask-image: linear-gradient(to bottom, transparent 0%, transparent 31%, rgba(0,0,0,.18) 39%, rgba(0,0,0,.78) 53%, #000 64%, #000 100%);
+        -webkit-mask-image: linear-gradient(to bottom, transparent 0%, transparent 31%, rgba(0,0,0,.18) 39%, rgba(0,0,0,.78) 53%, #000 64%, #000 100%);
+        filter: saturate(.83) contrast(1.055) brightness(.985);
+        transform-origin: 65% 56%;
+        will-change: transform;
+      }
+      .needle-motion {
+        position: absolute;
+        inset: 0;
+        mask-image: radial-gradient(ellipse 15% 27% at 64.8% 54%, #000 0%, #000 32%, rgba(0,0,0,.84) 52%, transparent 100%);
+        -webkit-mask-image: radial-gradient(ellipse 15% 27% at 64.8% 54%, #000 0%, #000 32%, rgba(0,0,0,.84) 52%, transparent 100%);
+        filter: saturate(0.78) contrast(1.08) brightness(1.02);
+        will-change: transform, filter;
+      }
+      .needle-glint {
+        position: absolute;
+        z-index: 4;
+        left: 64.9%;
+        top: 51.5%;
+        width: 4px;
+        height: 142px;
+        border-radius: 999px;
+        background: linear-gradient(180deg, rgba(243,246,247,0), rgba(243,246,247,.82) 45%, rgba(121,199,219,.3) 70%, rgba(243,246,247,0));
+        filter: blur(1.2px);
+        opacity: .5;
+        transform-origin: 50% 82%;
+        will-change: transform, opacity;
+      }
+      .fabric-compression {
+        position: absolute;
+        z-index: 4;
+        left: 58.6%;
+        top: 57.5%;
+        width: 290px;
+        height: 115px;
+        border-radius: 50%;
+        background: radial-gradient(ellipse, rgba(11,47,79,.28), rgba(17,24,32,.05) 58%, transparent 72%);
+        mix-blend-mode: multiply;
+        filter: blur(12px);
+        transform-origin: 58% 48%;
+        opacity: .68;
+        will-change: transform, opacity;
+      }
+      .fabric-highlight {
+        position: absolute;
+        z-index: 5;
+        left: 61.8%;
+        top: 58.3%;
+        width: 150px;
+        height: 45px;
+        border-radius: 50%;
+        background: radial-gradient(ellipse, rgba(221,231,234,.3), transparent 68%);
+        filter: blur(7px);
+        transform-origin: 50% 50%;
+        will-change: transform, opacity;
+      }
+      .threads {
+        position: absolute;
+        inset: 0;
+        z-index: 6;
+        width: 100%;
+        height: 100%;
+        overflow: visible;
+        pointer-events: none;
+        filter: drop-shadow(0 0 6px rgba(221,231,234,.38));
+      }
+      .thread {
+        fill: none;
+        stroke-linecap: round;
+        stroke-width: 2.8;
+        opacity: .68;
+        stroke-dasharray: 82 104;
+        will-change: transform, opacity;
+      }
+      .thread-white { stroke: #DDE7EA; }
+      .thread-blue { stroke: #79C7DB; opacity: .62; stroke-width: 2.4; stroke-dasharray: 52 108; }
+      .thread-soft { stroke: #F3F6F7; opacity: .38; stroke-width: 3.4; stroke-dasharray: 108 132; filter: blur(1px); }
+      .thread-fine { stroke: #F3F6F7; opacity: .52; stroke-width: 1.55; stroke-dasharray: 38 72; }
+      .thread-fine-blue { stroke: #79C7DB; opacity: .5; stroke-width: 1.7; stroke-dasharray: 28 82; }
+      .thread-core {
+        fill: none;
+        stroke-linecap: round;
+        stroke-width: 5;
+        stroke-dasharray: 24 280;
+        opacity: .9;
+        filter: drop-shadow(0 0 7px rgba(121,199,219,.72));
+        will-change: transform, opacity;
+      }
+      .thread-core-white { stroke: #F3F6F7; }
+      .thread-core-blue { stroke: #79C7DB; stroke-width: 4; }
+      .studio-grade {
+        position: absolute;
+        inset: 0;
+        z-index: 8;
+        pointer-events: none;
+        background:
+          radial-gradient(circle at 64% 57%, rgba(243,246,247,.08), transparent 20%),
+          linear-gradient(90deg, rgba(11,47,79,.12), transparent 43%, rgba(17,24,32,.07));
+        mix-blend-mode: soft-light;
+      }
+      .vignette {
+        position: absolute;
+        inset: 0;
+        z-index: 9;
+        pointer-events: none;
+        box-shadow: inset 0 0 150px rgba(17,24,32,.16);
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="4"
+      data-width="1920"
+      data-height="1080"
+    >
+      <div id="scene" class="scene clip" data-start="0" data-duration="4" data-track-index="0">
+        <div class="camera" data-layout-ignore></div>
+        <div class="fabric-camera" data-layout-ignore>
+          <div class="fabric-feed"></div>
+        </div>
+        <div class="fabric-compression" data-layout-ignore></div>
+        <div class="needle-camera" data-layout-ignore>
+          <div class="needle-motion"></div>
+        </div>
+        <div class="needle-glint" data-layout-ignore></div>
+        <div class="fabric-highlight" data-layout-ignore></div>
+        <svg class="threads" viewBox="0 0 1920 1080" aria-hidden="true" data-layout-ignore>
+          <path class="thread thread-white" d="M-90 290 C260 210 410 570 760 520 C1040 480 1110 620 1284 620 C1490 620 1580 400 2010 470" />
+          <path class="thread thread-blue" d="M-120 430 C250 650 520 260 890 495 C1060 602 1160 646 1288 618 C1450 580 1660 760 2010 540" />
+          <path class="thread thread-soft" d="M-60 155 C390 120 430 470 800 500 C1040 520 1170 665 1286 622 C1450 560 1580 280 1990 350" />
+          <path class="thread thread-fine" d="M-140 520 C230 360 520 690 820 535 C1060 410 1180 650 1288 620 C1510 560 1690 690 2050 610" />
+          <path class="thread thread-fine-blue" d="M-120 220 C260 470 530 180 880 440 C1050 568 1180 622 1286 618 C1510 610 1690 300 2030 420" />
+          <path class="thread-core thread-core-white" d="M-90 290 C260 210 410 570 760 520 C1040 480 1110 620 1284 620 C1490 620 1580 400 2010 470" />
+          <path class="thread-core thread-core-blue" d="M-120 430 C250 650 520 260 890 495 C1060 602 1160 646 1288 618 C1450 580 1660 760 2010 540" />
+        </svg>
+        <div class="studio-grade" data-layout-ignore></div>
+        <div class="vignette" data-layout-ignore></div>
+      </div>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+
+      tl.fromTo(".camera, .needle-camera",
+        { scale: 1.012, x: 0, y: 0 },
+        { scale: 1.028, x: -4, y: 2, duration: 2, ease: "sine.inOut", yoyo: true, repeat: 1 },
+        0
+      );
+      tl.fromTo(".fabric-camera",
+        { scale: 1.012, y: 0 },
+        { scale: 1.105, y: 42, duration: 2, ease: "power2.inOut", yoyo: true, repeat: 1 },
+        0
+      );
+      tl.fromTo(".fabric-feed",
+        { x: 0, y: 0, scaleX: 1, scaleY: 1 },
+        { x: 0, y: 18, scaleX: 1.055, scaleY: 1.095, duration: 2, ease: "power2.inOut", yoyo: true, repeat: 1 },
+        0
+      );
+      tl.fromTo(".needle-motion",
+        { y: 0, filter: "saturate(.78) contrast(1.08) brightness(1.02)" },
+        { y: 5, filter: "saturate(.78) contrast(1.08) brightness(.96)", duration: .125, ease: "power2.inOut", yoyo: true, repeat: 31 },
+        0
+      );
+      tl.fromTo(".needle-glint",
+        { y: -1, scaleY: .9, opacity: .34 },
+        { y: 6, scaleY: 1.06, opacity: .6, duration: .125, ease: "power1.inOut", yoyo: true, repeat: 31 },
+        0
+      );
+      tl.fromTo(".fabric-compression",
+        { scaleX: 1, scaleY: 1, opacity: .58 },
+        { scaleX: 1.11, scaleY: .64, opacity: .86, y: 7, duration: .25, ease: "sine.inOut", yoyo: true, repeat: 15 },
+        0
+      );
+      tl.fromTo(".fabric-highlight",
+        { scaleX: .96, scaleY: 1.02, opacity: .22 },
+        { scaleX: 1.16, scaleY: .62, opacity: .48, y: 6, duration: .25, ease: "circ.inOut", yoyo: true, repeat: 15 },
+        0
+      );
+      tl.fromTo(".thread-white",
+        { strokeDashoffset: 0, x: 0, y: 0, rotation: 0 },
+        { strokeDashoffset: -520, x: 28, y: -26, scaleY: 1.07, rotation: .9, duration: 2, ease: "sine.inOut", yoyo: true, repeat: 1 },
+        0
+      );
+      tl.fromTo(".thread-blue",
+        { strokeDashoffset: 0, x: 0, y: 0, rotation: 0 },
+        { strokeDashoffset: 500, x: -26, y: 28, scaleY: .92, rotation: -.85, duration: 2, ease: "power1.inOut", yoyo: true, repeat: 1 },
+        0
+      );
+      tl.fromTo(".thread-soft",
+        { strokeDashoffset: 0, x: 0, opacity: .16 },
+        { strokeDashoffset: -580, x: 24, y: -20, opacity: .48, scaleY: 1.08, duration: 2, ease: "circ.inOut", yoyo: true, repeat: 1 },
+        0
+      );
+      tl.fromTo(".thread-fine",
+        { strokeDashoffset: 0, x: 0, y: 0 },
+        { strokeDashoffset: -460, x: 20, y: 22, scaleY: .94, duration: 2, ease: "sine.inOut", yoyo: true, repeat: 1 },
+        0
+      );
+      tl.fromTo(".thread-fine-blue",
+        { strokeDashoffset: 0, x: 0, y: 0 },
+        { strokeDashoffset: 460, x: -20, y: -22, scaleY: 1.06, duration: 2, ease: "power2.inOut", yoyo: true, repeat: 1 },
+        0
+      );
+      tl.fromTo(".thread-core-white",
+        { strokeDashoffset: 0, x: -10, y: 10, opacity: .72 },
+        { strokeDashoffset: -920, x: 30, y: -22, opacity: 1, scaleY: 1.08, duration: 2, ease: "power1.inOut", yoyo: true, repeat: 1 },
+        0
+      );
+      tl.fromTo(".thread-core-blue",
+        { strokeDashoffset: 0, x: 12, y: -10, opacity: .7 },
+        { strokeDashoffset: 860, x: -28, y: 24, opacity: .96, scaleY: .91, duration: 2, ease: "power2.inOut", yoyo: true, repeat: 1 },
+        0
+      );
+      window.__timelines["main"] = tl;
+      tl.time(Number(new URLSearchParams(window.location.search).get("t") || 0));
+    </script>
+  </body>
+</html>

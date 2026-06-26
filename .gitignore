@@ -1,0 +1,25 @@
+.DS_Store
+.env
+.env.*
+!.env.example
+
+node_modules/
+.next/
+out/
+dist/
+coverage/
+outputs/
+work/
+
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+.vercel/
+
+# Discarded or non-displayed source/reference assets.
+public/assets/atly-logo-source.png
+public/assets/logos/references/goldwin.svg
+public/assets/logos/references/kanuk.svg
