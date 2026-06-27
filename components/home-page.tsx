@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { content, localeNames, locales, type Locale } from "@/lib/content";
 import { cn } from "@/lib/utils";
 
-const kakaoUrl = "https://qr.kakao.com/talk/wuH2Yfi5FE0Xmyt4o7pIMcp4nfY-";
+const kakaoUrl = "https://pf.kakao.com/_ltUxfX/chat";
 
 const hangzhouAddress = {
   zh: "浙江省杭州市西湖区三墩镇三坝瑞博国际B座17楼",
